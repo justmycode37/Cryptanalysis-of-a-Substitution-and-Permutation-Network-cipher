@@ -150,18 +150,16 @@ class Cryptanalysis:
             num_attack_samples: Anzahl zu testender Textpaare
         """
         characteristics = self.framework.generate_characteristics()
-        recovered_key_bits = {}  #bit_pos: (bit_value, bias_key)
+        recovered_key_bits = {}
 
         for alpha, beta, _ in characteristics:
             attack_samples = self.framework.generate_samples(num_attack_samples, alpha)
             key_bit_guesses, bias_key = self._find_key_bits(alpha, beta, attack_samples)
 
             for bit_pos, bit_value in key_bit_guesses.items():
-                # Wenn Bitstelle noch nicht vorhanden, dann hinzufügen
                 if bit_pos not in recovered_key_bits:
                     recovered_key_bits[bit_pos] = (bit_value, bias_key)
                 else:
-                    # Wenn neuer Bias höher, dann ersetzen
                     _, existing_bias = recovered_key_bits[bit_pos]
                     if bias_key > existing_bias:
                         recovered_key_bits[bit_pos] = (bit_value, bias_key)
@@ -170,4 +168,5 @@ class Cryptanalysis:
         for bit_pos, (bit_val, _) in recovered_key_bits.items():
             if bit_val:
                 final_key |= (1 << bit_pos)
+
         return final_key
