@@ -205,5 +205,4 @@ class CharacteristicSearcher:
                 print(f"  Output:  {out_bits}")
                 print()
 
-
         return results
