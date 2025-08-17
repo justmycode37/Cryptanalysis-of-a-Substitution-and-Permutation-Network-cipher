@@ -95,12 +95,11 @@ class CharacteristicSearcher:
 
     def _add_constraints(self):
         """
-        Fügt dem Optimierungsmodell folgende Nebenbedingungen hinzu:
-        - Maskenrelation pro S-Box aus der Look-Up-Tabelle.
-        - Permutation der Ausgabemasken zur nächsten Rundeneingabe.
-        - Produkt aus Bias-/Wahrscheinlichkeitswerten wird maximiert.
-        - Optional: Limitierung der aktiven S-Boxen.
-        - Vermeidet triviale Nullmasken (erste und letzte Maske != 0).
+        Diese Methode fügt dem Optimierungsmodell Nebenbedingungen hinzu.
+        Einerseits werden die Eingabe- und Ausgaberelationen der S-Box 
+        festgelegt, die Permutation gefordert und die Nullmasken-Konfiguration 
+        vermieden. Andererseits wird das globale Optimierungsziel festgelegt, 
+        wobei optional die Anzahl aktiver S-Boxen festgelegt werden kann.
         """
         prob_terms = []
         for r in range(self.num_rounds):
@@ -110,8 +109,7 @@ class CharacteristicSearcher:
             for i in range(4):
                 in_nib = Extract((i + 1) * 4 - 1, i * 4, self.in_masks[r])
                 out_nib = Extract((i + 1) * 4 - 1, i * 4, self.out_masks[r])
-
-                # Falls Eingabe aktiv, dann muss Ausgabe auch aktiv sein
+                
                 constraints.append(Implies(in_nib == 0, out_nib == 0))
 
                 prob = Real(f"prob_r{r}_n{i}")
@@ -128,23 +126,19 @@ class CharacteristicSearcher:
             self.active_sboxes_per_round.append(active_sboxes)
             self.solver.add(And(constraints))
 
-            # Permutationsvorgang
             for i in range(16):
                 bit = Extract(i, i, self.out_masks[r])
                 self.solver.add(Extract(self.spn.pbox[i], self.spn.pbox[i], self.in_masks[r + 1]) == bit)
 
-        # Definiere Optimierungsziel
         total_bias = Real("total_bias")
         product_expr = reduce(lambda x, y: x * y, prob_terms)
         self.solver.add(total_bias == product_expr)
         self.solver.maximize(total_bias)
 
-        # Limitiere die Anzahl aktiver S-Boxen
         if self.max_active_sboxes is not None:
             all_active = [b for r in self.active_sboxes_per_round for b in r]
             self.solver.add(Sum([If(b, 1, 0) for b in all_active]) <= self.max_active_sboxes)
-
-        # Vermeide Nullmasken-Konfiguration
+        
         self.solver.add(self.in_masks[0] != 0)
         self.solver.add(self.in_masks[-1] != 0)
 
@@ -210,5 +204,6 @@ class CharacteristicSearcher:
                 out_bits = "".join(str((beta >> i) & 1) for i in reversed(range(16)))
                 print(f"  Output:  {out_bits}")
                 print()
+
 
         return results
