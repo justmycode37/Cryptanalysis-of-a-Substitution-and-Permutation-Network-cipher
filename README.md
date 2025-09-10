@@ -1,1 +1,1 @@
-This code provides the structure for performing an automated linear or differential attack on a substitution and permutation network cipher. 
+As part of my matura thesis, I explored the field of crpytanalysis with a particular focus on two of its most important and well established methods. The linear and differential cryptanalysis. Both of these techniques are classical tools for analyzing block ciphers. 
